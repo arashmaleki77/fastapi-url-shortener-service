@@ -1,19 +1,26 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, UniqueConstraint, Index, func
-from sqlalchemy.orm import relationship
-from core.database import Base
+from sqlalchemy import UniqueConstraint, Index
+from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship
+from datetime import datetime
+from user.models.user import User
 
 
-class ShortenerURL(Base):
+class ShortenerURL(SQLModel, table=True):
     __tablename__ = "shortener_url"
     __table_args__ = (
         UniqueConstraint("short_url", "user_id", name="unique_short_url_user_id"),
         Index("index_short_url_user_id", "short_url", "user_id")
     )
 
-    id = Column(Integer, primary_key=True, index=True)
-    short_url = Column(String(5), nullable=False, index=True)
-    original_url = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    short_url: str = Field(max_length=5, nullable=False, index=True)
+    original_url: str = Field(nullable=False)
+    user_id: int = Field(foreign_key="user.id", nullable=False, index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-    user = relationship("User")
+    user: Optional["User"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "joined",
+            "primaryjoin": "ShortenerURL.user_id==User.id",
+        }
+    )

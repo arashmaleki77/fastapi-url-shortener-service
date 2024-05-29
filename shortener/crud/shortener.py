@@ -2,6 +2,7 @@ from shortener.models.shortener import ShortenerURL
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from shortener.utils import generate_short_url
+from fastapi import status, HTTPException
 
 
 async def get_long_url_by_shortener_url(db: AsyncSession, user_id: int, short_url: str):
@@ -25,7 +26,10 @@ async def create_shortener_url(db: AsyncSession, original_url: str, user_id: int
             await db.refresh(new_shortener_url)
             return new_shortener_url
         except Exception as error:
-            print(error)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Unfortunately we cannot save your link right now. please try again later."
+            )
     return None
 
 

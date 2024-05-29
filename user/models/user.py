@@ -1,15 +1,18 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, func
-from core.database import Base
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import datetime
 
 
-class User(Base):
+class User(SQLModel, table=True):
     __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(25), unique=True, index=True, nullable=False)
-    sub_directory = Column(String(150), unique=True, index=True, nullable=False)
-    first_name = Column(String(25), nullable=False)
-    last_name = Column(String(25), nullable=False)
-    password = Column(String, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
+    id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    username: str = Field(max_length=25, unique=True, index=True, nullable=False)
+    sub_directory: str = Field(max_length=150, unique=True, index=True, nullable=False)
+    first_name: str = Field(max_length=25, nullable=False)
+    last_name: str = Field(max_length=25, nullable=False)
+    password: str = Field(nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow, nullable=False, sa_column_kwargs={"onupdate": datetime.utcnow}
+    )

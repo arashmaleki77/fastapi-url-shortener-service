@@ -1,5 +1,5 @@
 from core.settings import settings
-from core.database import Base, get_db
+from core.database import get_db
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
 from main import app
@@ -7,6 +7,7 @@ import pytest_asyncio
 import pytest
 from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlmodel import SQLModel
 
 
 transport = ASGITransport(app=app)
@@ -20,10 +21,10 @@ TestSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_comm
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(SQLModel.metadata.create_all)
     yield
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(SQLModel.metadata.drop_all)
 
 
 @pytest_asyncio.fixture(scope="function")

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis_client import cache
-from shortener.crud.shortener import get_long_url_by_shortener_url, create_shortener_url, get_shortener_url_by_id, \
-    get_shortener_urls_by_user_id
+from shortener.crud.shortener import (
+    get_long_url_by_shortener_url, create_shortener_url, get_shortener_url_by_id, get_shortener_urls_by_user_id
+)
 from shortener.schemas.shortener import ShortenerUrlSchema, CreateShortenerUrlSchema
 from user.crud.user import get_user_by_sub_directory
 from user.dependencies import get_current_user
@@ -48,11 +49,6 @@ async def create_shortener_urls(
         db: AsyncSession = Depends(get_db)
 ):
     new_shortener_url = await create_shortener_url(db=db, user_id=current_user.id, original_url=new_url.original_url)
-    if not new_shortener_url:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Unfortunately we cannot save your link right now. please try again later."
-        )
     return new_shortener_url
 
 

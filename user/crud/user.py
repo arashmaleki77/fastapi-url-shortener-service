@@ -1,8 +1,10 @@
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from user.schemas.auth import RegisterSchema
 from sqlalchemy.future import select
 from user.auth.auth import get_hashed_password
 from user.models.user import User
+from sqlalchemy.exc import IntegrityError
 
 
 async def get_user(db: AsyncSession, user_id: int):
@@ -21,15 +23,19 @@ async def get_user_by_username(db: AsyncSession, username: str):
 
 
 async def create_user(db: AsyncSession, current_user: RegisterSchema):
-    hashed_password = get_hashed_password(current_user.password)
-    new_user = User(
-        username=current_user.username,
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
-        password=hashed_password,
-        sub_directory=current_user.sub_directory
-    )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    return new_user
+    try:
+        hashed_password = get_hashed_password(current_user.password)
+        new_user = User(
+            username=current_user.username,
+            first_name=current_user.first_name,
+            last_name=current_user.last_name,
+            password=hashed_password,
+            sub_directory=current_user.sub_directory
+        )
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+        return new_user
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="sub directory already exists.")
