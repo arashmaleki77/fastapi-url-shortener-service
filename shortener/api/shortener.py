@@ -73,4 +73,4 @@ async def redirect_into_original_url(
 
     cache.set(cache_key, str(current_shortener_url.original_url), ex=10)
 
-    return RedirectResponse(url=current_shortener_url.original_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+    return {"url": current_shortener_url.original_url}
