@@ -2,6 +2,7 @@ from core.settings import settings
 from fastapi import status
 import pytest
 from httpx import AsyncClient
+from redis import Redis
 
 
 @pytest.mark.asyncio
@@ -41,6 +42,11 @@ async def test_successfully_redirect_shortener_url(async_client: AsyncClient):
     redirect_shortener_url = f"{settings.API_V1_STR}/shortener/redirect/{data['sub_directory']}/{new_shortener_response['short_url']}/"
     redirect_shortener_response = await async_client.get(redirect_shortener_url, follow_redirects=False)
     assert redirect_shortener_response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
+
+    redis_client = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+    cache_key = f"{data['sub_directory']}/{new_shortener_response['short_url']}"
+    shortener_key = redis_client.get(cache_key)
+    assert shortener_key
 
 
 @pytest.mark.asyncio
