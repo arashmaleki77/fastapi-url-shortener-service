@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis_client import cache
+from redis_client import get_from_cache, set_to_cache
 from shortener.crud.shortener import (
     get_long_url_by_shortener_url, create_shortener_url, get_shortener_url_by_id, get_shortener_urls_by_user_id
 )
@@ -59,7 +59,7 @@ async def redirect_into_original_url(
         db: AsyncSession = Depends(get_db)
 ):
     cache_key = f"{sub_directory}/{short_url}"
-    original_url = cache.get(cache_key)
+    original_url = await get_from_cache(cache_key)
     if original_url:
         return RedirectResponse(url=original_url.decode("utf-8"), status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
@@ -71,6 +71,6 @@ async def redirect_into_original_url(
     if not current_shortener_url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
 
-    cache.set(cache_key, str(current_shortener_url.original_url), ex=10)
+    await set_to_cache(key=cache_key, value=str(current_shortener_url.original_url), expire=10800)
 
     return {"url": current_shortener_url.original_url}
